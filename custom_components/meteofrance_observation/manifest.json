@@ -1,0 +1,12 @@
+{
+  "domain": "meteofrance_observation",
+  "name": "Météo-France Observation",
+  "config_flow": true,
+  "documentation": "https://github.com/Syxxxx/meteofrance-observation",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/Syxxxx/meteofrance-observation/issues",
+  "version": "1.0.0",
+  "codeowners": ["@Syxxxx"],
+  "requirements": [],
+  "loggers": ["custom_components.meteofrance_observation"]
+}
