@@ -1,6 +1,7 @@
 """Sensor platform for Météo-France Observation."""
 from __future__ import annotations
 
+from homeassistant.components.sensor.const import UnitOfPrecipitation
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -17,7 +18,6 @@ from homeassistant.const import (
     DEGREE,
     UnitOfIrradiance,
     UnitOfLength,
-    UnitOfPrecipitation,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -82,7 +82,6 @@ SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:weather-windy-variant",
     ),
-    # <-- DÉBUT MODIFICATION
     SensorEntityDescription(
         key="precipitation_intensity",
         name="Intensité des précipitations",
@@ -91,7 +90,6 @@ SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:weather-pouring",
     ),
-    # <-- FIN MODIFICATION
     SensorEntityDescription(
         key="solar_radiation",
         name="Rayonnement Solaire",
