@@ -65,15 +65,6 @@ class MeteoFranceApi:
 
         def jm2_to_wm2(rad_jm2: float | None) -> float | None:
             return round(rad_jm2 / 360, 2) if rad_jm2 is not None else None
-        
-        # <-- DÉBUT MODIFICATION
-        precipitation_mm_6min = resp.get('rr_per')
-        precipitation_intensity = (
-            round(precipitation_mm_6min * 10, 2) 
-            if precipitation_mm_6min is not None 
-            else None
-        )
-        # <-- FIN MODIFICATION
 
         return {
             'reference_time': resp.get('reference_time'),
@@ -87,7 +78,7 @@ class MeteoFranceApi:
             'wind_speed': ms_to_kmh(resp.get('ff')),
             'gust_direction': resp.get('dxi10'),
             'gust_speed': ms_to_kmh(resp.get('fxi10')),
-            'precipitation_intensity': precipitation_intensity,
+            'precipitation': resp.get('rr_per'),
             'solar_radiation': jm2_to_wm2(resp.get('ray_glo01')),
             'sunshine_duration': resp.get('insolh'),
             'visibility': resp.get('vv'),
