@@ -17,7 +17,7 @@ from homeassistant.const import (
     DEGREE,
     UnitOfIrradiance,
     UnitOfLength,
-    UnitOfPrecipitationDepth
+    UnitOfPrecipitation,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -82,14 +82,16 @@ SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:weather-windy-variant",
     ),
+    # <-- DÉBUT MODIFICATION
     SensorEntityDescription(
-        key="precipitation",
-        name="Précipitations (6 min)",
-        native_unit_of_measurement=UnitOfPrecipitationDepth.MILLIMETERS,
+        key="precipitation_intensity",
+        name="Intensité des précipitations",
+        native_unit_of_measurement=UnitOfPrecipitation.MILLIMETERS_PER_HOUR,
         device_class=SensorDeviceClass.PRECIPITATION_INTENSITY,
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:weather-pouring",
     ),
+    # <-- FIN MODIFICATION
     SensorEntityDescription(
         key="solar_radiation",
         name="Rayonnement Solaire",
