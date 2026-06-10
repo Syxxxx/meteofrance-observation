@@ -1,7 +1,7 @@
 """API Client for Météo-France Public API."""
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import urllib.parse
 from typing import Any
 
@@ -25,7 +25,16 @@ class MeteoFranceApi:
 
     async def async_get_data(self) -> dict[str, Any]:
         """Fetch the latest data from the API."""
-        datage = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        # The API requires the date to be at the format AAAA-MM-JJThh:mm:00Z
+        # with minutes being a multiple of 6 (00, 06, 12, ..., 54) and seconds
+        # equal to 00. Round down to the previous valid 6-minute slot.
+        now = datetime.now(timezone.utc)
+        now -= timedelta(
+            minutes=now.minute % 6,
+            seconds=now.second,
+            microseconds=now.microsecond,
+        )
+        datage = now.strftime("%Y-%m-%dT%H:%M:00Z")
         params = {
             'id_station': self._station_id,
             'date': datage,
