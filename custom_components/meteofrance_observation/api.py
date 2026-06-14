@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 import urllib.parse
 from typing import Any
 
-from aiohttp import ClientSession, ClientError
+from aiohttp import ClientSession, ClientError, ClientResponseError
 
 from .const import API_BASE_URL, API_SERVICE
 
@@ -13,6 +13,12 @@ _LOGGER = logging.getLogger(__name__)
 
 class ApiError(Exception):
     """Exception to indicate a general API error."""
+
+class InvalidAuthError(ApiError):
+    """Exception to indicate the API rejected the credentials."""
+
+class EmptyResponseError(ApiError):
+    """Exception to indicate the API returned no data for any tried slot."""
 
 class MeteoFranceApi:
     """API Client for Météo-France station data."""
@@ -23,42 +29,77 @@ class MeteoFranceApi:
         self._api_key = api_key
         self._station_id = station_id
 
+    # Météo-France publishes observations with a delay of several minutes.
+    # We start from a slot that is already published, then walk further back
+    # if the API still returns an empty list (e.g., a missed measurement).
+    PUBLICATION_DELAY = timedelta(minutes=12)
+    MAX_SLOT_RETRIES = 5
+    SLOT_INTERVAL = timedelta(minutes=6)
+
     async def async_get_data(self) -> dict[str, Any]:
         """Fetch the latest data from the API."""
         # The API requires the date to be at the format AAAA-MM-JJThh:mm:00Z
         # with minutes being a multiple of 6 (00, 06, 12, ..., 54) and seconds
-        # equal to 00. Round down to the previous valid 6-minute slot.
-        now = datetime.now(timezone.utc)
-        now -= timedelta(
+        # equal to 00. Round down to a valid 6-minute slot, taking the API
+        # publication delay into account.
+        now = datetime.now(timezone.utc) - self.PUBLICATION_DELAY
+        slot = now - timedelta(
             minutes=now.minute % 6,
             seconds=now.second,
             microseconds=now.microsecond,
         )
-        datage = now.strftime("%Y-%m-%dT%H:%M:00Z")
-        params = {
-            'id_station': self._station_id,
-            'date': datage,
-            'format': 'json',
-            'apikey': self._api_key
-        }
-        url = f"{API_BASE_URL}{API_SERVICE}?{urllib.parse.urlencode(params)}"
-        
-        _LOGGER.debug("Requesting data from URL: %s", url)
 
-        try:
-            async with self._session.get(url) as response:
-                response.raise_for_status()
-                data = await response.json()
-                _LOGGER.debug("API Response received: %s", data)
-                
-                if not data:
-                    raise ApiError("API returned an empty list")
+        last_error: str | None = None
+        for attempt in range(self.MAX_SLOT_RETRIES):
+            datage = slot.strftime("%Y-%m-%dT%H:%M:00Z")
+            params = {
+                'id_station': self._station_id,
+                'date': datage,
+                'format': 'json',
+                'apikey': self._api_key,
+            }
+            url = f"{API_BASE_URL}{API_SERVICE}?{urllib.parse.urlencode(params)}"
 
-                return self._process_data(data[0])
+            _LOGGER.debug(
+                "Requesting data from URL (attempt %d): %s", attempt + 1, url
+            )
 
-        except ClientError as err:
-            _LOGGER.error("API request error: %s", err)
-            raise ApiError(f"API request error: {err}") from err
+            try:
+                async with self._session.get(url) as response:
+                    if response.status in (401, 403):
+                        raise InvalidAuthError(
+                            f"API rejected credentials (HTTP {response.status})"
+                        )
+                    response.raise_for_status()
+                    data = await response.json()
+                    _LOGGER.debug("API Response received: %s", data)
+
+                    if data:
+                        return self._process_data(data[0])
+
+                    last_error = f"API returned an empty list for slot {datage}"
+                    _LOGGER.debug(
+                        "Empty response for slot %s, trying previous slot",
+                        datage,
+                    )
+
+            except ClientResponseError as err:
+                if err.status in (401, 403):
+                    raise InvalidAuthError(
+                        f"API rejected credentials (HTTP {err.status})"
+                    ) from err
+                _LOGGER.error("API request error: %s", err)
+                raise ApiError(f"API request error: {err}") from err
+            except ClientError as err:
+                _LOGGER.error("API request error: %s", err)
+                raise ApiError(f"API request error: {err}") from err
+
+            slot -= self.SLOT_INTERVAL
+
+        raise EmptyResponseError(
+            last_error
+            or "API returned an empty list for all attempted slots"
+        )
 
     def _process_data(self, resp: dict[str, Any]) -> dict[str, Any]:
         """Process the raw API data into a clean dictionary."""
