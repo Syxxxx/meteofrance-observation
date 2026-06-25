@@ -8,7 +8,7 @@ from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_API_KEY
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import MeteoFranceApi, ApiError
+from .api import MeteoFranceApi, ApiError, EmptyResponseError, InvalidAuthError
 from .const import DOMAIN, CONF_STATION_ID
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,6 +41,12 @@ class MeteoFranceObservationConfigFlow(ConfigFlow, domain=DOMAIN):
                     station_id=user_input[CONF_STATION_ID],
                 )
                 await api.async_get_data()
+            except InvalidAuthError as err:
+                _LOGGER.error("Invalid auth during validation: %s", err)
+                errors["base"] = "invalid_auth"
+            except EmptyResponseError as err:
+                _LOGGER.error("No data available during validation: %s", err)
+                errors["base"] = "no_data_available"
             except ApiError as err:
                 _LOGGER.error("API Error during validation: %s", err)
                 errors["base"] = "cannot_connect"

@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "station_id": "Station ID",
+          "api_key": "API key"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the Météo-France API.",
+      "invalid_auth": "Invalid API key.",
+      "no_data_available": "The API returned no data for this station in the last few minutes. Please check the station ID and try again later.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "This station is already configured."
+    }
+  }
+}
