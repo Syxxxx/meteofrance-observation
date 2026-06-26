@@ -19,6 +19,7 @@ Cette intégration pour Home Assistant permet de récupérer les données d'obse
 * Home Assistant (version 2023.9 ou plus récente).
 * [HACS](https://hacs.xyz/) installé et fonctionnel.
 * Une clé d'API valide obtenue depuis le [portail API de Météo-France](https://portail-api.meteofrance.fr/).
+* Avoir souscrit à l'API [Données d’observation Version: v2 (gratuit)](https://portail-api.meteofrance.fr/web/fr/api/DonneesPubliquesObservation).
 
 ## ⬇️ Installation via HACS
 
