@@ -13,5 +13,5 @@ CONF_STATION_ID = "station_id"
 UPDATE_INTERVAL_MINUTES = 6
 
 # API
-API_BASE_URL = "https://public-api.meteofrance.fr/public/DPObs/v1"
+API_BASE_URL = "https://public-api.meteofrance.fr/public/DPObs/v2"
 API_SERVICE = "/station/infrahoraire-6m"
